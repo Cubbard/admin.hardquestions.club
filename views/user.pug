@@ -1,4 +1,28 @@
 extends layouts/master.pug
 
 block content
+    h1 Users
+    h2 Create User
     form(action="/user", method="POST")
+        fieldset
+            label(for="identity") Identity: &nbsp
+            input(type="text", name="identity")
+            br
+
+            label(for="password") Password: &nbsp
+            input(type="password", name="password")
+            br
+
+        input(type="submit", value="submit")
+    hr
+    h2 Existing Users
+    table(border="1")
+        tr
+            th identity
+            th pass_hash
+            th salt
+        each user in users
+            tr
+                td= user.identity
+                td= user.pass_hash
+                td= user.salt

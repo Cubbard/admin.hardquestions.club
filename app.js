@@ -4,12 +4,32 @@ const conn    = require('./modules/db.js');
 
 const bodyParser = require('body-parser');
 
+const Crypto = require('./modules/Crypto.js');
+
 app.use(bodyParser());
 app.use('/public', express.static('./public'));
 app.set('view engine', 'pug');
 
 app.get('/', (req, res) => {
     res.render('index');
+})
+
+app.route('/user').get((req, res) => {
+    conn.then(async c => {
+        const users = await c.query('select * from user');
+        res.render('user', { users });
+    })
+}).post((req, res) => {
+    const { identity, password } = req.body;
+    conn.then(async c => {
+        const hash  = Crypto.getHash(password);
+        let results = await c.query('insert into user (identity, pass_hash, salt) \
+                                values (?, ?, ?)', [identity, hash[0], hash[1]]);
+        res.redirect('/user');
+    }).catch(err => {
+        console.log(err);
+        res.send(err);
+    })
 })
 
 app.route('/task').get((req, res) => {
@@ -20,6 +40,7 @@ app.route('/task').get((req, res) => {
 }).post((req, res) => {
     const {title, descr, expires, group_type} = req.body;
     let is_head = 1;
+
     conn.then(async c => {
         let head = await c.query('select * from task_queue where is_head = 1'),
             tail;
